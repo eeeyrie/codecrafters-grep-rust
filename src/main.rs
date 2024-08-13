@@ -3,13 +3,16 @@ use std::io;
 use std::process;
 
 fn match_pattern(input_line: &str, pattern: &str) -> bool {
+    match pattern {
+        "\\d" => return input_line.contains(|character: char| character.is_numeric())
+        "\\w" => return input_line.contains(|character: char| character.is_alphanumeric())
+    }
+
     if pattern.chars().count() == 1 {
         return input_line.contains(pattern);
-    } else if pattern == "\\d" {
-        return input_line.contains(|character: char| character.is_digit(10))
-    } else {
-        panic!("Unhandled pattern: {}", pattern)
     }
+    
+    panic!("Unhandled pattern: {}", pattern)
 }
 
 // Usage: echo <input_text> | your_program.sh -E <pattern>
