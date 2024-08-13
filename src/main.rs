@@ -6,19 +6,16 @@ fn match_pattern(input_line: &str, pattern: &str) -> bool {
     match pattern {
         "\\d" => return input_line.contains(|character: char| character.is_numeric()),
         "\\w" => return input_line.contains(|character: char| character.is_alphanumeric()),
-        _ => {
-            if pattern.chars().count() == 1 {
-                return input_line.contains(pattern);
-            } else if pattern.starts_with("[^") && pattern.ends_with(']') {
-                let trimmed_pattern: &str = &pattern.trim_start_matches('[').trim_end_matches(']')[..];
-                return input_line.contains(|character: char| !trimmed_pattern.contains(character))
-            } else if pattern.starts_with('[') && pattern.ends_with(']') {
-                let trimmed_pattern: &str = &pattern.trim_start_matches('[').trim_end_matches(']')[..];
-                return input_line.contains(|character: char| trimmed_pattern.contains(character))
-            }
-
-            panic!("Unhandled pattern: {}", pattern)
-        }
+        p if p.chars().count() == 1 => return input_line.contains(pattern),
+        p if p.starts_with("[^") && p.ends_with(']') => {
+            let trimmed_pattern: &str = &pattern.trim_start_matches('[').trim_end_matches(']')[..];
+            return input_line.contains(|character: char| !trimmed_pattern.contains(character))
+        },
+        p if p.starts_with('[') && p.ends_with(']') => {
+            let trimmed_pattern: &str = &pattern.trim_start_matches('[').trim_end_matches(']')[..];
+            return input_line.contains(|character: char| trimmed_pattern.contains(character))
+        },
+        _ => panic!("Unhandled pattern: {}", pattern)
     }
 }
 
