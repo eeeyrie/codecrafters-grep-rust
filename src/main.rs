@@ -4,15 +4,16 @@ use std::process;
 
 fn match_pattern(input_line: &str, pattern: &str) -> bool {
     match pattern {
-        "\\d" => return input_line.contains(|character: char| character.is_numeric())
-        "\\w" => return input_line.contains(|character: char| character.is_alphanumeric())
+        "\\d" => return input_line.contains(|character: char| character.is_numeric()),
+        "\\w" => return input_line.contains(|character: char| character.is_alphanumeric()),
+        _ => {
+            if pattern.chars().count() == 1 {
+                return input_line.contains(pattern);
+            }
+            
+            panic!("Unhandled pattern: {}", pattern)
+        }
     }
-
-    if pattern.chars().count() == 1 {
-        return input_line.contains(pattern);
-    }
-    
-    panic!("Unhandled pattern: {}", pattern)
 }
 
 // Usage: echo <input_text> | your_program.sh -E <pattern>
