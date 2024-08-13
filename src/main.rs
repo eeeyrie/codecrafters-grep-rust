@@ -10,8 +10,8 @@ fn match_pattern(input_line: &str, pattern: &str) -> bool {
             if pattern.chars().count() == 1 {
                 return input_line.contains(pattern);
             } else if pattern.starts_with('[') && pattern.ends_with(']') {
-                println!("{}", &pattern.trim_start_matches('[').trim_end_matches(']')[..]);
-                return input_line.contains(&pattern.trim_start_matches('[').trim_end_matches(']')[..])
+                let trimmed_pattern: &str = &pattern.trim_start_matches('[').trim_end_matches(']')[..];
+                return input_line.contains(|character: char| trimmed_pattern.contains(character))
             }
 
             panic!("Unhandled pattern: {}", pattern)
