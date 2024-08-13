@@ -9,8 +9,10 @@ fn match_pattern(input_line: &str, pattern: &str) -> bool {
         _ => {
             if pattern.chars().count() == 1 {
                 return input_line.contains(pattern);
+            } else if pattern.starts_with('[') && pattern.ends_with(']') {
+                return input_line.contains(pattern.trim_start_matches('[').trim_end_matches(']'))
             }
-            
+
             panic!("Unhandled pattern: {}", pattern)
         }
     }
