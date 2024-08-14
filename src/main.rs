@@ -6,8 +6,8 @@ enum CharacterClass<'a> {
     AnyDigit,
     AnyAlphanumeric,
     LiteralCharacter(char),
-    PosCharacter(&<'a> str),
-    NegCharacter(&<'a> str),
+    PosCharacter(&'a str),
+    NegCharacter(&'a str),
 }
 
 fn parse_pattern(pattern: &str) -> Vec<CharacterClass> {
