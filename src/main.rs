@@ -2,6 +2,7 @@ use std::env;
 use std::io;
 use std::process;
 
+#[derive(Debug)]
 enum CharacterClass<'a> {
     AnyDigit,
     AnyAlphanumeric,
@@ -37,9 +38,9 @@ fn parse_pattern(pattern: &str) -> Vec<CharacterClass> {
                 }
                 
                 if is_positive_class {
-                    CharacterClass::PosCharacter(characters)
+                    CharacterClass::PosCharacter(&characters)
                 } else {
-                    CharacterClass::NegCharacter(characters)
+                    CharacterClass::NegCharacter(&characters)
                 }
             }
             _ => CharacterClass::LiteralCharacter(current_char)
