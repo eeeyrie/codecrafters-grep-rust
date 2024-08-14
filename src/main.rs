@@ -2,19 +2,19 @@ use std::env;
 use std::io;
 use std::process;
 
-enum CharacterClass {
+enum CharacterClass<'a> {
     AnyDigit,
     AnyAlphanumeric,
     LiteralCharacter(char),
-    PosCharacter(&str),
-    NegCharacter(&str),
+    PosCharacter(&<'a> str),
+    NegCharacter(&<'a> str),
 }
 
-fn parse_pattern(pattern: &str) => Vec<CharacterClass> {
+fn parse_pattern(pattern: &str) -> Vec<CharacterClass> {
     let pattern_as_enums: Vec<CharacterClass> = Vec::new();
-    while let Some(current_char) = pattern.iter().next() {
+    while let Some(current_char) = pattern.chars().next() {
         pattern_as_enums.push(match current_char {
-            '\\' => match pattern.iter().next() {
+            '\\' => match pattern.chars().next() {
                 Some('d') => CharacterClass::AnyDigit,
                 Some('w') => CharacterClass::AnyAlphanumeric,
                 _ => continue
@@ -23,13 +23,13 @@ fn parse_pattern(pattern: &str) => Vec<CharacterClass> {
                 let mut characters: String = String::new();
                 let mut is_positive_class: bool = true;
 
-                match pattern.iter().next() {
+                match pattern.chars().next() {
                     Some('^') => is_positive_class = false,
                     Some(chara) => characters.push(chara),
                     None => break
                 }
 
-                while let Some(current_class_char) = pattern.iter().next() {
+                while let Some(current_class_char) = pattern.chars().next() {
                     match current_class_char {
                         ']' => break,
                         _ => characters.push(chara)
