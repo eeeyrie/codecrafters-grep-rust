@@ -5,9 +5,9 @@ use std::process;
 enum CharacterClass {
     AnyDigit,
     AnyAlphanumeric,
-    LiteralCharacter(character: char),
-    PosCharacter(characters: &str),
-    NegCharacter(characters: &str),
+    LiteralCharacter(char),
+    PosCharacter(&str),
+    NegCharacter(&str),
 }
 
 fn parse_pattern(pattern: &str) => Vec<CharacterClass> {
