@@ -1,7 +1,6 @@
 use std::env;
 use std::io;
 use std::process;
-use std::collections::VecDeque;
 
 #[derive(Debug)]
 enum CharacterClass {
@@ -55,12 +54,14 @@ fn parse_pattern<'a>(pattern: &'a str) -> Vec<CharacterClass> {
 }
 
 fn match_pattern(input_line: &str, pattern: &str) -> bool {
-    let mut parsed_pattern: Vec<CharacterClass> = parse_pattern(pattern);
+    let parsed_pattern: Vec<CharacterClass> = parse_pattern(pattern);
     let mut pattern_iterator = parsed_pattern.iter();
     let mut input_iterator = input_line.chars();
-    'pattern_loop: while let Some(current_class) = pattern_iterator.next() {
+    let mut start_of_pattern = true;
+    
+    while let Some(current_class) = pattern_iterator.next() {
+        dbg!(current_class);
         if let Some(chara) = input_iterator.next() {
-            dbg!(current_class);
             dbg!(chara);
             let does_character_match: bool = match current_class {
                 CharacterClass::AnyDigit => chara.is_numeric(),
@@ -68,14 +69,19 @@ fn match_pattern(input_line: &str, pattern: &str) -> bool {
                 CharacterClass::LiteralCharacter(character) => chara == *character,
                 CharacterClass::PosCharacter(characters) => characters.contains(chara),
                 CharacterClass::NegCharacter(characters) => !characters.contains(chara),
-                _ => panic!("Unhandled pattern: {}", pattern)
+                //_ => panic!("Unhandled pattern: {}", pattern)
             };
 
             if !does_character_match {
-                pattern_iterator = parsed_pattern.iter()
+                pattern_iterator = parsed_pattern.iter();
+                start_of_pattern = true;
+            } else if start_of_pattern {
+                start_of_pattern = false;
             }
-        } else {
+        } else if start_of_pattern {
             break
+        } else {
+            return false
         }
     }
 
