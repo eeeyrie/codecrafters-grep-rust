@@ -15,7 +15,7 @@ fn parse_pattern<'a>(pattern: &'a str) -> Vec<CharacterClass> {
     let mut pattern_as_enums: Vec<CharacterClass> = Vec::new();
     let mut pattern_iterator = pattern.chars();
     while let Some(current_char) = pattern_iterator.next() {
-        dbg!(current_char);
+        //dbg!(current_char);
         pattern_as_enums.push(match current_char {
             '\\' => match pattern_iterator.next() {
                 Some('d') => CharacterClass::AnyDigit,
@@ -60,9 +60,9 @@ fn match_pattern(input_line: &str, pattern: &str) -> bool {
     let mut start_of_pattern = true;
     
     while let Some(current_class) = pattern_iterator.next() {
-        dbg!(current_class);
+        //dbg!(current_class);
         if let Some(chara) = input_iterator.next() {
-            dbg!(chara);
+            //dbg!(chara);
             let does_character_match: bool = match current_class {
                 CharacterClass::AnyDigit => chara.is_numeric(),
                 CharacterClass::AnyAlphanumeric => chara.is_alphanumeric(),
