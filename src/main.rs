@@ -3,6 +3,7 @@ use std::io;
 use std::process;
 use std::collections::VecDeque;
 
+#[derive(Debug)]
 enum CharacterClass {
     AnyDigit,
     AnyAlphanumeric,
@@ -54,21 +55,33 @@ fn parse_pattern<'a>(pattern: &'a str) -> Vec<CharacterClass> {
 }
 
 fn match_pattern(input_line: &str, pattern: &str) -> bool {
-    let mut parsed_pattern: VecDeque<CharacterClass> = VecDeque::from(parse_pattern(pattern));
+    let mut parsed_pattern: Vec<CharacterClass> = parse_pattern(pattern);
+    let mut pattern_iterator = parsed_pattern.iter();
     let mut input_iterator = input_line.chars();
-    while let Some(chara) = input_iterator.next() {
-        if let Some(current_class) = parsed_pattern.pop_front() {
-            match current_class {
-                CharacterClass::AnyDigit => if !chara.is_numeric() {return false},
-                CharacterClass::AnyAlphanumeric => if !chara.is_alphanumeric() {return false},
-                CharacterClass::LiteralCharacter(character) => if chara != character {return false},
-                CharacterClass::NegCharacter(characters) => if characters.contains(chara) {return false},
-                CharacterClass::PosCharacter(characters) => if !characters.contains(chara) {return false},
+    'pattern_loop: while let Some(current_class) = pattern_iterator.next() {
+        if let Some(chara) = input_iterator.next() {
+            dbg!(current_class);
+            let does_character_match: bool = match current_class {
+                CharacterClass::AnyDigit => chara.is_numeric(),
+                CharacterClass::AnyAlphanumeric => chara.is_alphanumeric(),
+                CharacterClass::LiteralCharacter(character) => chara == *character,
+                CharacterClass::PosCharacter(characters) => characters.contains(chara),
+                CharacterClass::NegCharacter(characters) => !characters.contains(chara),
                 _ => panic!("Unhandled pattern: {}", pattern)
+            };
+
+            if !does_character_match {
+                pattern_iterator = parsed_pattern.iter()
             }
+        } else {
+            break
         }
     }
-    return true
+
+    match pattern_iterator.next() {
+        None => true,
+        Some(current_class) => {dbg!(current_class); false}
+    }
     
     //match pattern {
     //    "\\d" => return input_line.contains(|character: char| character.is_numeric()),
