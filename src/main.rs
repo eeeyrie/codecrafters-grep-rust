@@ -57,12 +57,12 @@ fn match_pattern(input_line: &str, pattern: &str) -> bool {
     let parsed_pattern: Vec<CharacterClass> = parse_pattern(pattern);
     let mut pattern_iterator = parsed_pattern.iter();
     let mut input_iterator = input_line.chars();
-    let mut start_of_pattern = true;
+    let original_iterator_length = pattern_iterator.len();
     
     while let Some(current_class) = pattern_iterator.next() {
-        //dbg!(current_class);
+        dbg!(current_class);
         if let Some(chara) = input_iterator.next() {
-            //dbg!(chara);
+            dbg!(chara);
             let does_character_match: bool = match current_class {
                 CharacterClass::AnyDigit => chara.is_numeric(),
                 CharacterClass::AnyAlphanumeric => chara.is_alphanumeric(),
@@ -72,16 +72,16 @@ fn match_pattern(input_line: &str, pattern: &str) -> bool {
                 //_ => panic!("Unhandled pattern: {}", pattern)
             };
 
+            
             if !does_character_match {
                 pattern_iterator = parsed_pattern.iter();
-                start_of_pattern = true;
-            } else if start_of_pattern {
-                start_of_pattern = false;
             }
-        } else if start_of_pattern {
-            break
-        } else {
+        } else if pattern_iterator.len() == original_iterator_length {
+            println!("second arm");
             return false
+        } else {
+            println!("third arm");
+            break
         }
     }
 
