@@ -57,7 +57,7 @@ fn match_pattern(input_line: &str, pattern: &str) -> bool {
     let parsed_pattern: Vec<CharacterClass> = parse_pattern(pattern);
     let mut pattern_iterator = parsed_pattern.iter();
     let mut input_iterator = input_line.chars();
-    let original_iterator_length = pattern_iterator.len();
+    //let original_iterator_length = pattern_iterator.len();
     
     while let Some(current_class) = pattern_iterator.next() {
         dbg!(current_class);
@@ -77,12 +77,8 @@ fn match_pattern(input_line: &str, pattern: &str) -> bool {
             if !does_character_match {
                 pattern_iterator = parsed_pattern.iter();
             }
-        } else if pattern_iterator.len() == original_iterator_length {
-            println!("second arm");
-            return false
         } else {
-            println!("third arm");
-            break
+            return false
         }
     }
 
