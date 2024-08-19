@@ -61,6 +61,7 @@ fn match_pattern(input_line: &str, pattern: &str) -> bool {
     
     while let Some(current_class) = pattern_iterator.next() {
         dbg!(current_class);
+        dbg!(pattern_iterator.len());
         if let Some(chara) = input_iterator.next() {
             dbg!(chara);
             let does_character_match: bool = match current_class {
