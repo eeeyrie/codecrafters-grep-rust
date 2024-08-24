@@ -2,10 +2,11 @@ use std::env;
 use std::io;
 use std::process;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 enum CharacterClass {
     AnyDigit,
     AnyAlphanumeric,
+    StartOfStringAnchor,
     LiteralCharacter(char),
     PosCharacter(String),
     NegCharacter(String),
@@ -14,6 +15,10 @@ enum CharacterClass {
 fn parse_pattern<'a>(pattern: &'a str) -> Vec<CharacterClass> {
     let mut pattern_as_enums: Vec<CharacterClass> = Vec::new();
     let mut pattern_iterator = pattern.chars();
+    if pattern.chars().next() == Some('^') {
+        pattern_as_enums.push(CharacterClass::StartOfStringAnchor);
+        pattern_iterator.next();
+    }
     while let Some(current_char) = pattern_iterator.next() {
         //dbg!(current_char);
         pattern_as_enums.push(match current_char {
@@ -45,12 +50,51 @@ fn parse_pattern<'a>(pattern: &'a str) -> Vec<CharacterClass> {
                 } else {
                     CharacterClass::NegCharacter(characters)
                 }
-            }
+            },
+            
             _ => CharacterClass::LiteralCharacter(current_char)
         })
     }
     
     return pattern_as_enums
+}
+
+fn match_character(current_class: &CharacterClass, current_char: char) -> bool {
+    match current_class {
+        CharacterClass::AnyDigit => current_char.is_numeric(),
+        CharacterClass::AnyAlphanumeric => current_char.is_alphanumeric(),
+        CharacterClass::LiteralCharacter(character) => current_char == *character,
+        CharacterClass::PosCharacter(characters) => characters.contains(current_char),
+        CharacterClass::NegCharacter(characters) => !characters.contains(current_char),
+        CharacterClass::StartOfStringAnchor => current_char == '^' // this should not happen
+        //_ => panic!("Unhandled pattern: {}", pattern)
+    }
+}
+
+fn match_pattern_start(input_line: &str, pattern: &str) -> bool {
+    println!("in match_pattern_start");
+    let parsed_pattern: Vec<CharacterClass> = parse_pattern(pattern);
+    let mut pattern_iterator = parsed_pattern.iter();
+    let mut input_iterator = input_line.chars();
+    
+    while let Some(current_class) = pattern_iterator.next() {
+        dbg!(current_class);
+        dbg!(pattern_iterator.len());
+        //if *current_class == CharacterClass::StartOfStringAnchor {
+        //    return match_pattern_start(input_line, pattern);
+        //}
+        if let Some(chara) = input_iterator.next() {
+            dbg!(chara);
+            let does_character_match: bool = match_character(current_class, chara);
+            if !does_character_match {
+                return false
+            }
+        } else {
+            return false
+        }
+    }
+
+    return true
 }
 
 fn match_pattern(input_line: &str, pattern: &str) -> bool {
@@ -59,21 +103,19 @@ fn match_pattern(input_line: &str, pattern: &str) -> bool {
     let mut input_iterator = input_line.chars();
     //let original_iterator_length = pattern_iterator.len();
     
+    if let Some(CharacterClass::StartOfStringAnchor) = parsed_pattern.iter().next() {
+        return match_pattern_start(input_line, &pattern[1..]);
+    }
+
     while let Some(current_class) = pattern_iterator.next() {
         dbg!(current_class);
         dbg!(pattern_iterator.len());
+        //if *current_class == CharacterClass::StartOfStringAnchor {
+        //    return match_pattern_start(input_line, pattern);
+        //}
         if let Some(chara) = input_iterator.next() {
             dbg!(chara);
-            let does_character_match: bool = match current_class {
-                CharacterClass::AnyDigit => chara.is_numeric(),
-                CharacterClass::AnyAlphanumeric => chara.is_alphanumeric(),
-                CharacterClass::LiteralCharacter(character) => chara == *character,
-                CharacterClass::PosCharacter(characters) => characters.contains(chara),
-                CharacterClass::NegCharacter(characters) => !characters.contains(chara),
-                //_ => panic!("Unhandled pattern: {}", pattern)
-            };
-
-            
+            let does_character_match: bool = match_character(current_class, chara);
             if !does_character_match {
                 pattern_iterator = parsed_pattern.iter();
             }
