@@ -7,6 +7,7 @@ enum CharacterClass {
     AnyDigit,
     AnyAlphanumeric,
     StartOfStringAnchor,
+    EndOfStringAnchor,
     LiteralCharacter(char),
     PosCharacter(String),
     NegCharacter(String),
@@ -15,10 +16,12 @@ enum CharacterClass {
 fn parse_pattern<'a>(pattern: &'a str) -> Vec<CharacterClass> {
     let mut pattern_as_enums: Vec<CharacterClass> = Vec::new();
     let mut pattern_iterator = pattern.chars();
+    
     if pattern.chars().next() == Some('^') {
         pattern_as_enums.push(CharacterClass::StartOfStringAnchor);
         pattern_iterator.next();
     }
+
     while let Some(current_char) = pattern_iterator.next() {
         //dbg!(current_char);
         pattern_as_enums.push(match current_char {
@@ -55,6 +58,11 @@ fn parse_pattern<'a>(pattern: &'a str) -> Vec<CharacterClass> {
             _ => CharacterClass::LiteralCharacter(current_char)
         })
     }
+
+    if pattern_as_enums[pattern_as_enums.len() - 1] == CharacterClass::LiteralCharacter('$') {
+        pattern_as_enums.pop();
+        pattern_as_enums.push(CharacterClass::EndOfStringAnchor)
+    }
     
     return pattern_as_enums
 }
@@ -66,7 +74,8 @@ fn match_character(current_class: &CharacterClass, current_char: char) -> bool {
         CharacterClass::LiteralCharacter(character) => current_char == *character,
         CharacterClass::PosCharacter(characters) => characters.contains(current_char),
         CharacterClass::NegCharacter(characters) => !characters.contains(current_char),
-        CharacterClass::StartOfStringAnchor => current_char == '^' // this should not happen
+        CharacterClass::StartOfStringAnchor => current_char == '^', // this should not happen
+        CharacterClass::EndOfStringAnchor => true
         //_ => panic!("Unhandled pattern: {}", pattern)
     }
 }
@@ -80,9 +89,17 @@ fn match_pattern_start(input_line: &str, pattern: &str) -> bool {
     while let Some(current_class) = pattern_iterator.next() {
         dbg!(current_class);
         dbg!(pattern_iterator.len());
+
         //if *current_class == CharacterClass::StartOfStringAnchor {
         //    return match_pattern_start(input_line, pattern);
         //}
+
+        if *current_class == CharacterClass::EndOfStringAnchor {
+            let (lower_bound, upper_bound) = input_iterator.size_hint();
+            dbg!(lower_bound, upper_bound);
+            return lower_bound == 0
+        }
+
         if let Some(chara) = input_iterator.next() {
             dbg!(chara);
             let does_character_match: bool = match_character(current_class, chara);
@@ -110,9 +127,17 @@ fn match_pattern(input_line: &str, pattern: &str) -> bool {
     while let Some(current_class) = pattern_iterator.next() {
         dbg!(current_class);
         dbg!(pattern_iterator.len());
+
         //if *current_class == CharacterClass::StartOfStringAnchor {
         //    return match_pattern_start(input_line, pattern);
         //}
+
+        if *current_class == CharacterClass::EndOfStringAnchor {
+            let (lower_bound, upper_bound) = input_iterator.size_hint();
+            dbg!(lower_bound, upper_bound);
+            return lower_bound == 0
+        }
+
         if let Some(chara) = input_iterator.next() {
             dbg!(chara);
             let does_character_match: bool = match_character(current_class, chara);
