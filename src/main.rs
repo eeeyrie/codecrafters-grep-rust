@@ -9,13 +9,14 @@ enum CharacterClass {
     StartOfStringAnchor,
     EndOfStringAnchor,
     LiteralCharacter(char),
+    OneOrMoreCharacters(char),
     PosCharacter(String),
     NegCharacter(String),
 }
 
 fn parse_pattern<'a>(pattern: &'a str) -> Vec<CharacterClass> {
     let mut pattern_as_enums: Vec<CharacterClass> = Vec::new();
-    let mut pattern_iterator = pattern.chars();
+    let mut pattern_iterator = pattern.chars().peekable();
     
     if pattern.chars().next() == Some('^') {
         pattern_as_enums.push(CharacterClass::StartOfStringAnchor);
@@ -55,7 +56,14 @@ fn parse_pattern<'a>(pattern: &'a str) -> Vec<CharacterClass> {
                 }
             },
             
-            _ => CharacterClass::LiteralCharacter(current_char)
+            _ => {
+                if let Some('+') = pattern_iterator.peek() { 
+                    pattern_iterator.next();
+                    CharacterClass::OneOrMoreCharacters(current_char)
+                } else {
+                    CharacterClass::LiteralCharacter(current_char)
+                } 
+            }
         })
     }
 
@@ -67,61 +75,18 @@ fn parse_pattern<'a>(pattern: &'a str) -> Vec<CharacterClass> {
     return pattern_as_enums
 }
 
-fn match_character(current_class: &CharacterClass, current_char: char) -> bool {
-    match current_class {
-        CharacterClass::AnyDigit => current_char.is_numeric(),
-        CharacterClass::AnyAlphanumeric => current_char.is_alphanumeric(),
-        CharacterClass::LiteralCharacter(character) => current_char == *character,
-        CharacterClass::PosCharacter(characters) => characters.contains(current_char),
-        CharacterClass::NegCharacter(characters) => !characters.contains(current_char),
-        CharacterClass::StartOfStringAnchor => current_char == '^', // this should not happen
-        CharacterClass::EndOfStringAnchor => true
-        //_ => panic!("Unhandled pattern: {}", pattern)
-    }
-}
-
-fn match_pattern_start(input_line: &str, pattern: &str) -> bool {
-    println!("in match_pattern_start");
-    let parsed_pattern: Vec<CharacterClass> = parse_pattern(pattern);
-    let mut pattern_iterator = parsed_pattern.iter();
-    let mut input_iterator = input_line.chars();
+/*fn match_character(current_class: &CharacterClass, current_char: char) -> bool {
     
-    while let Some(current_class) = pattern_iterator.next() {
-        dbg!(current_class);
-        dbg!(pattern_iterator.len());
+}*/
 
-        //if *current_class == CharacterClass::StartOfStringAnchor {
-        //    return match_pattern_start(input_line, pattern);
-        //}
-
-        if *current_class == CharacterClass::EndOfStringAnchor {
-            let (lower_bound, upper_bound) = input_iterator.size_hint();
-            dbg!(lower_bound, upper_bound);
-            return lower_bound == 0
-        }
-
-        if let Some(chara) = input_iterator.next() {
-            dbg!(chara);
-            let does_character_match: bool = match_character(current_class, chara);
-            if !does_character_match {
-                return false
-            }
-        } else {
-            return false
-        }
-    }
-
-    return true
-}
-
-fn match_pattern(input_line: &str, pattern: &str) -> bool {
+fn match_pattern(input_line: &str, pattern: &str, match_from_start: bool) -> bool {
     let parsed_pattern: Vec<CharacterClass> = parse_pattern(pattern);
-    let mut pattern_iterator = parsed_pattern.iter();
-    let mut input_iterator = input_line.chars();
+    let mut pattern_iterator = parsed_pattern.iter().peekable();
+    let mut input_iterator = input_line.chars().peekable();
     //let original_iterator_length = pattern_iterator.len();
     
-    if let Some(CharacterClass::StartOfStringAnchor) = parsed_pattern.iter().next() {
-        return match_pattern_start(input_line, &pattern[1..]);
+    if let Some(CharacterClass::StartOfStringAnchor) = pattern_iterator.peek() {
+        return match_pattern(input_line, &pattern[1..], true);
     }
 
     while let Some(current_class) = pattern_iterator.next() {
@@ -138,11 +103,30 @@ fn match_pattern(input_line: &str, pattern: &str) -> bool {
             return lower_bound == 0
         }
 
-        if let Some(chara) = input_iterator.next() {
-            dbg!(chara);
-            let does_character_match: bool = match_character(current_class, chara);
-            if !does_character_match {
-                pattern_iterator = parsed_pattern.iter();
+        if let Some(current_char) = input_iterator.next() {
+            dbg!(current_char);
+            let does_character_match: bool = match current_class {
+                CharacterClass::AnyDigit => current_char.is_numeric(),
+                CharacterClass::AnyAlphanumeric => current_char.is_alphanumeric(),
+                CharacterClass::LiteralCharacter(character) => current_char == *character,
+                CharacterClass::PosCharacter(characters) => characters.contains(current_char),
+                CharacterClass::NegCharacter(characters) => !characters.contains(current_char),
+                CharacterClass::StartOfStringAnchor => current_char == '^', // this should not happen
+                CharacterClass::EndOfStringAnchor => panic!("end of string anchor should have been handled earlier"),
+                CharacterClass::OneOrMoreCharacters(character) => {
+                    if current_char == *character {
+                        while let Some(next_char) = input_iterator.peek() {
+                            if next_char == character {input_iterator.next();} else {break}
+                        }
+                        true
+                    } else {false}
+                },
+                _ => panic!("Unhandled character class: {:?}", current_class)
+            };
+            if !does_character_match && !match_from_start {
+                pattern_iterator = parsed_pattern.iter().peekable();
+            } else if !does_character_match && match_from_start {
+                return false
             }
         } else {
             return false
@@ -186,7 +170,7 @@ fn main() {
     io::stdin().read_line(&mut input_line).unwrap();
 
     // Uncomment this block to pass the first stage
-    if match_pattern(&input_line, &pattern) {
+    if match_pattern(&input_line, &pattern, false) {
         process::exit(0)
     } else {
         process::exit(1)
