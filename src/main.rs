@@ -8,6 +8,7 @@ enum CharacterClass {
     AnyAlphanumeric,
     StartOfStringAnchor,
     EndOfStringAnchor,
+    Wildcard,
     LiteralCharacter(char),
     OneOrMoreCharacters(char),
     ZeroOrOneCharacters(char),
@@ -56,7 +57,7 @@ fn parse_pattern<'a>(pattern: &'a str) -> Vec<CharacterClass> {
                     CharacterClass::NegCharacter(characters)
                 }
             },
-            
+            '.' => CharacterClass::Wildcard,
             _ => {
                 match pattern_iterator.peek() {
                     Some('+') => {pattern_iterator.next(); CharacterClass::OneOrMoreCharacters(current_char)},
@@ -113,6 +114,7 @@ fn match_pattern(input_line: &str, pattern: &str, match_from_start: bool) -> boo
                 CharacterClass::PosCharacter(characters) => characters.contains(current_char),
                 CharacterClass::NegCharacter(characters) => !characters.contains(current_char),
                 CharacterClass::StartOfStringAnchor => current_char == '^', // this should not happen
+                CharacterClass::Wildcar => true,
                 CharacterClass::EndOfStringAnchor => panic!("end of string anchor should have been handled earlier"),
                 CharacterClass::OneOrMoreCharacters(character) => {
                     if current_char == *character {
