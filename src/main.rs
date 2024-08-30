@@ -114,7 +114,7 @@ fn match_pattern(input_line: &str, pattern: &str, match_from_start: bool) -> boo
                 CharacterClass::PosCharacter(characters) => characters.contains(current_char),
                 CharacterClass::NegCharacter(characters) => !characters.contains(current_char),
                 CharacterClass::StartOfStringAnchor => current_char == '^', // this should not happen
-                CharacterClass::Wildcar => true,
+                CharacterClass::Wildcard => true,
                 CharacterClass::EndOfStringAnchor => panic!("end of string anchor should have been handled earlier"),
                 CharacterClass::OneOrMoreCharacters(character) => {
                     if current_char == *character {
