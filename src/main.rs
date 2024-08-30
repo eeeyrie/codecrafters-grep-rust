@@ -10,6 +10,7 @@ enum CharacterClass {
     EndOfStringAnchor,
     LiteralCharacter(char),
     OneOrMoreCharacters(char),
+    ZeroOrOneCharacters(char),
     PosCharacter(String),
     NegCharacter(String),
 }
@@ -57,12 +58,11 @@ fn parse_pattern<'a>(pattern: &'a str) -> Vec<CharacterClass> {
             },
             
             _ => {
-                if let Some('+') = pattern_iterator.peek() { 
-                    pattern_iterator.next();
-                    CharacterClass::OneOrMoreCharacters(current_char)
-                } else {
-                    CharacterClass::LiteralCharacter(current_char)
-                } 
+                match pattern_iterator.peek() {
+                    Some('+') => {pattern_iterator.next(); CharacterClass::OneOrMoreCharacters(current_char)},
+                    Some('?') => {pattern_iterator.next(); CharacterClass::ZeroOrOneCharacters(current_char)},
+                    _ => CharacterClass::LiteralCharacter(current_char)
+                }
             }
         })
     }
@@ -74,10 +74,6 @@ fn parse_pattern<'a>(pattern: &'a str) -> Vec<CharacterClass> {
     
     return pattern_as_enums
 }
-
-/*fn match_character(current_class: &CharacterClass, current_char: char) -> bool {
-    
-}*/
 
 fn match_pattern(input_line: &str, pattern: &str, match_from_start: bool) -> bool {
     let parsed_pattern: Vec<CharacterClass> = parse_pattern(pattern);
@@ -93,14 +89,19 @@ fn match_pattern(input_line: &str, pattern: &str, match_from_start: bool) -> boo
         dbg!(current_class);
         dbg!(pattern_iterator.len());
 
-        //if *current_class == CharacterClass::StartOfStringAnchor {
-        //    return match_pattern_start(input_line, pattern);
-        //}
-
-        if *current_class == CharacterClass::EndOfStringAnchor {
-            let (lower_bound, upper_bound) = input_iterator.size_hint();
-            dbg!(lower_bound, upper_bound);
-            return lower_bound == 0
+        match current_class {
+            CharacterClass::EndOfStringAnchor => {
+                let (lower_bound, upper_bound) = input_iterator.size_hint();
+                dbg!(lower_bound, upper_bound);
+                return lower_bound == 0
+            },
+            CharacterClass::ZeroOrOneCharacters(character) => {
+                if let Some(character) = input_iterator.peek(){
+                    input_iterator.next();
+                }
+                continue
+            },
+            _ => {}
         }
 
         if let Some(current_char) = input_iterator.next() {
@@ -121,6 +122,7 @@ fn match_pattern(input_line: &str, pattern: &str, match_from_start: bool) -> boo
                         true
                     } else {false}
                 },
+                CharacterClass::ZeroOrOneCharacters(_) => panic!("zero or one quantifier should have been handled earlier"),
                 _ => panic!("Unhandled character class: {:?}", current_class)
             };
             if !does_character_match && !match_from_start {
@@ -137,21 +139,6 @@ fn match_pattern(input_line: &str, pattern: &str, match_from_start: bool) -> boo
         None => true,
         Some(current_class) => {dbg!(current_class); false}
     }
-    
-    //match pattern {
-    //    "\\d" => return input_line.contains(|character: char| character.is_numeric()),
-    //    "\\w" => return input_line.contains(|character: char| character.is_alphanumeric()),
-    //    p if p.chars().count() == 1 => return input_line.contains(pattern),
-    //    p if p.starts_with("[^") && p.ends_with(']') => {
-    //        let trimmed_pattern: &str = &pattern.trim_start_matches('[').trim_end_matches(']')[..];
-    //        return input_line.contains(|character: char| !trimmed_pattern.contains(character))
-    //    },
-    //    p if p.starts_with('[') && p.ends_with(']') => {
-    //        let trimmed_pattern: &str = &pattern.trim_start_matches('[').trim_end_matches(']')[..];
-    //        return input_line.contains(|character: char| trimmed_pattern.contains(character))
-    //    },
-    //    _ => panic!("Unhandled pattern: {}", pattern)
-    //}
 }
 
 // Usage: echo <input_text> | your_program.sh -E <pattern>
