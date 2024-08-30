@@ -96,7 +96,7 @@ fn match_pattern(input_line: &str, pattern: &str, match_from_start: bool) -> boo
                 return lower_bound == 0
             },
             CharacterClass::ZeroOrOneCharacters(character) => {
-                if let Some(character) = input_iterator.peek(){
+                if input_iterator.peek() == Some(character) {
                     input_iterator.next();
                 }
                 continue
