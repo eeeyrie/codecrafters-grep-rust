@@ -77,11 +77,24 @@ fn parse_pattern<'a>(pattern: &'a str) -> Vec<CharacterClass> {
 }
 
 fn match_pattern(input_line: &str, pattern: &str, match_from_start: bool) -> bool {
+    if pattern.starts_with('(') && pattern.ends_with(')') {
+        let trimmed_pattern = pattern.trim_matches('(').trim_end_matches(')');
+        for subpattern in trimmed_pattern.split('|') {
+            if match_pattern(input_line, subpattern, false) {
+                return true
+            } else {
+                continue
+            }
+        }
+        
+        return false
+    }
+
     let parsed_pattern: Vec<CharacterClass> = parse_pattern(pattern);
     let mut pattern_iterator = parsed_pattern.iter().peekable();
     let mut input_iterator = input_line.chars().peekable();
     //let original_iterator_length = pattern_iterator.len();
-    
+
     if let Some(CharacterClass::StartOfStringAnchor) = pattern_iterator.peek() {
         return match_pattern(input_line, &pattern[1..], true);
     }
